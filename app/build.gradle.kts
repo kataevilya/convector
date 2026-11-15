@@ -27,7 +27,7 @@ val generateLauncherIcons = tasks.register("generateLauncherIcons") {
             "xxxhdpi" to 192
         )
         for ((qualifier, size) in densities) {
-            val dir = File(outDir, "res/mipmap-$qualifier")
+            val dir = File(outDir, "mipmap-$qualifier")
             dir.mkdirs()
             val s = size.toFloat()
             val image = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
