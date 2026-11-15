@@ -46,9 +46,12 @@ jobs:
           done
           if [ -z "$SDKM" ]; then
             echo "sdkmanager не найден - используем предустановленный SDK"
+          elif [ ! -d "$SDK_ROOT/platforms/android-34" ] || [ ! -d "$SDK_ROOT/build-tools/34.0.0" ]; then
+            # yes обрывает пайп по SIGPIPE => возвращаем 0 через subshell + || true
+            ( yes | "$SDKM" --sdk_root="$SDK_ROOT" --install \
+              "platform-tools" "platforms;android-34" "build-tools;34.0.0" > /dev/null ) || true
           else
-            yes | "$SDKM" --sdk_root="$SDK_ROOT" --install \
-              "platform-tools" "platforms;android-34" "build-tools;34.0.0" > /dev/null
+            echo "platforms;android-34 и build-tools;34.0.0 уже установлены"
           fi
           echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
