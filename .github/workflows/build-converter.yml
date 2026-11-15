@@ -28,12 +28,31 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
+      # Android SDK уже есть на ubuntu-latest. android-actions/setup-android@v3
+      # больше не работает (пакет "tools" удалён из репозитория Google), поэтому
+      # нужные пакеты доставляем напрямую через sdkmanager.
       - name: Install Android SDK packages
+        shell: bash
         run: |
-          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          SDKM=""
+          for candidate in \
+            "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" \
+            "$SDK_ROOT/cmdline-tools/16.0/bin/sdkmanager" \
+            "$SDK_ROOT/cmdline-tools/11.0/bin/sdkmanager" \
+            "$SDK_ROOT/tools/bin/sdkmanager"; do
+            if [ -x "$candidate" ]; then SDKM="$candidate"; break; fi
+          done
+          if [ -z "$SDKM" ]; then
+            echo "sdkmanager не найден - используем предустановленный SDK"
+          else
+            yes | "$SDKM" --sdk_root="$SDK_ROOT" --install \
+              "platform-tools" "platforms;android-34" "build-tools;34.0.0" > /dev/null
+          fi
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          ls "$SDK_ROOT/platforms" "$SDK_ROOT/build-tools"
 
       - name: Set up Gradle 8.7
         uses: gradle/actions/setup-gradle@v4
