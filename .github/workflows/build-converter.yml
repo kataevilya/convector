@@ -69,7 +69,25 @@ jobs:
       - name: Show template APK
         run: ls -la template-webview/build/outputs/apk/release/
 
-      # 2) Генерируем ключ подписи для самого конвертера
+      # 2) JVM-smoke-тест: на реальном template.apk прогоняем патч AXML,
+      #    патч resources.arsc, выравнивание ZIP и подпись apksig v1+v2.
+      - name: Smoke test (AXML + ARSC + zipalign + apksig)
+        run: gradle :app:testDebugUnitTest --no-daemon --stacktrace
+
+      - name: Verify patched APK (zipalign / apksigner / aapt2)
+        shell: bash
+        run: |
+          set -euo pipefail
+          BT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}/build-tools/34.0.0"
+          ls -la app/build/smoke/
+          echo "=== zipalign -c (4) ==="
+          "$BT/zipalign" -c -v 4 app/build/smoke/aligned.apk | tail -3
+          echo "=== apksigner verify ==="
+          "$BT/apksigner" verify --verbose --print-certs app/build/smoke/signed.apk
+          echo "=== aapt2 dump badging ==="
+          "$BT/aapt2" dump badging app/build/smoke/signed.apk | head -4
+
+      # 3) Генерируем ключ подписи для самого конвертера
       - name: Create signing keystore
         env:
           STORE_PASS: ${{ secrets.KEYSTORE_PASSWORD || 'html2apk-converter' }}
@@ -81,7 +99,7 @@ jobs:
             -storepass "$STORE_PASS" -keypass "$STORE_PASS" \
             -dname "CN=HTML2APK Converter, O=HTML2APK, C=US"
 
-      # 3) Собираем само приложение-конвертер (:app).
+      # 4) Собираем само приложение-конвертер (:app).
       #    Задача copyTemplateApk кладёт template-webview-release-unsigned.apk
       #    в app/src/main/assets/template.apk (через generated assets).
       - name: Build converter APK

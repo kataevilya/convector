@@ -148,6 +148,24 @@ tasks.named("preBuild").configure {
     dependsOn(copyTemplateApk)
 }
 
+/**
+ * JVM-smoke-тест патчера: AXML + resources.arsc + выравнивание + подпись apksig v1/v2.
+ * Ему нужен путь к свежесобранному шаблону.
+ */
+tasks.withType<Test>().configureEach {
+    dependsOn(copyTemplateApk)
+    systemProperty(
+        "html2apk.template",
+        layout.buildDirectory.dir("generated/templateAssets")
+            .get().asFile.resolve("template.apk").absolutePath
+    )
+    testLogging {
+        events("passed", "failed", "skipped")
+        showStandardStreams = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
@@ -162,4 +180,6 @@ dependencies {
 
     implementation(libs.apksig)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+
+    testImplementation(libs.junit)
 }

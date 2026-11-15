@@ -128,15 +128,31 @@ class AppBuilder(private val context: Context) {
 
     private fun applyIcons(entries: LinkedHashMap<String, ByteArray>, request: BuildRequest) {
         val iconFile = request.iconFile
-        val icons = if (iconFile != null && iconFile.isFile) {
-            IconProcessor.build(IconProcessor.decode(iconFile))
-        } else {
+        if (iconFile == null || !iconFile.isFile) return
+
+        val icons = IconProcessor.build(IconProcessor.decode(iconFile))
+        val arsc = entries["resources.arsc"] ?: return
+
+        // Основной путь: пути и плотности иконок берём из resources.arsc,
+        // поэтому переименование ресурсов (res/9w.png) не мешает.
+        val plan = IconPatcher.plan(arsc, icons)
+        if (plan != null) {
+            var applied = 0
+            plan.forEach { (path, bytes) ->
+                if (path in entries) {
+                    entries[path] = bytes
+                    applied++
+                }
+            }
+            require(applied > 0) {
+                "Иконки найдены в resources.arsc, но соответствующих файлов нет в APK"
+            }
             return
         }
 
+        // Резервный путь: классические имена res/mipmap-mdpi-v4/ic_launcher.png
         var replaced = 0
-        val names = entries.keys.toList()
-        names.forEach { name ->
+        entries.keys.toList().forEach { name ->
             if (!ICON_ENTRY.containsMatchIn(name)) return@forEach
             val density = densityOf(name) ?: "xxxhdpi"
             val bytes = icons[density] ?: return@forEach
@@ -145,7 +161,7 @@ class AppBuilder(private val context: Context) {
         }
 
         require(replaced > 0) {
-            "В шаблоне не найдены иконки res/mipmap-*/ic_launcher.png"
+            "Не удалось найти иконку (@mipmap/ic_launcher) ни в resources.arsc, ни по путям res/mipmap-*/"
         }
     }
 

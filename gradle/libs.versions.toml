@@ -8,6 +8,7 @@ composeBom = "2024.09.03"
 webkit = "1.11.0"
 apksig = "8.5.2"
 desugarJdkLibs = "2.0.4"
+junit = "4.13.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -23,6 +24,7 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
 apksig = { group = "com.android.tools.build", name = "apksig", version.ref = "apksig" }
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
