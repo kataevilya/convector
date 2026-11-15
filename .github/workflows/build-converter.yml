@@ -85,7 +85,15 @@ jobs:
           echo "=== apksigner verify ==="
           "$BT/apksigner" verify --verbose --print-certs app/build/smoke/signed.apk
           echo "=== aapt2 dump badging ==="
-          "$BT/aapt2" dump badging app/build/smoke/signed.apk | head -4
+          "$BT/aapt2" dump badging app/build/smoke/signed.apk > /tmp/badging.txt || true
+          head -8 /tmp/badging.txt
+
+      - name: Upload smoke APK (для проверки установки на телефоне)
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-signed-apk
+          path: app/build/smoke/signed.apk
+          if-no-files-found: error
 
       # 3) Генерируем ключ подписи для самого конвертера
       - name: Create signing keystore

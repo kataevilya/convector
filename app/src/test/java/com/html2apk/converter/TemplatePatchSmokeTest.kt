@@ -129,6 +129,12 @@ class TemplatePatchSmokeTest {
         ZipFile(signed).use { zip ->
             assertNotNull(zip.getEntry("AndroidManifest.xml"))
             assertNotNull("v1-подпись (META-INF/MANIFEST.MF) отсутствует", zip.getEntry("META-INF/MANIFEST.MF"))
+            val signatureFiles = zip.entries().toList().map { it.name }
+                .filter { it.startsWith("META-INF/") }
+            assertTrue(
+                "v1-подпись неполная: $signatureFiles",
+                signatureFiles.any { it.endsWith(".SF") } && signatureFiles.any { it.endsWith(".RSA") }
+            )
         }
     }
 
